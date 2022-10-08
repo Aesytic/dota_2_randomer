@@ -46,7 +46,7 @@ def run_migrations_offline():
     script output.
 
     """
-    url = f"sqlite://{SQLITE_FILE_PATH}"
+    url = f"sqlite:///{SQLITE_FILE_PATH}"
     context.configure(
         url=url,
         target_metadata=target_metadata,

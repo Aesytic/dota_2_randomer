@@ -1,6 +1,12 @@
+import json
 from pydantic import BaseModel
 from enum import Enum
 from uuid import UUID
+
+
+class BaseSerialisableModel(BaseModel):
+    def to_dict(self):
+        return json.loads(self.json())
 
 
 class HeroType(Enum):
@@ -10,7 +16,7 @@ class HeroType(Enum):
     SUPPORT = "support"
 
 
-class Hero(BaseModel):
+class Hero(BaseSerialisableModel):
     id: UUID
     name: str
     randomable: bool = True

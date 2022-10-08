@@ -2,8 +2,9 @@ from fastapi import FastAPI
 from uuid import UUID, uuid4
 from typing import List
 
+from api import hero
 from api.data_structures import Hero, HeroType
-from api.hero import add_hero, update_hero, delete_hero
+from db.sqlite import SqliteSession
 
 app = FastAPI()
 
@@ -27,20 +28,24 @@ def read_hero(hero_id: UUID):
 
 @app.post("/heroes")
 def create_hero(request: Hero):
-    add_hero(request)
+    session = SqliteSession()
+
+    hero.create_hero(session, request)
+
+    session.close()
 
     return request
 
 
 @app.put("/heroes/{hero_id}", response_model=Hero)
 def update_hero(hero_id: UUID, request: Hero):
-    updated_hero = update_hero(hero_id, request)
+    updated_hero = hero.update_hero(hero_id, request)
 
     return updated_hero
 
 
 @app.delete("/heroes/{hero_id}", response_model=Hero)
 def delete_hero(hero_id: UUID):
-    deleted_hero = delete_hero(hero_id)
+    deleted_hero = hero.delete_hero(hero_id)
 
     return TEST_HERO
