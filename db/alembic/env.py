@@ -12,6 +12,7 @@ from sqlalchemy import pool
 from alembic import context
 
 SQLITE_FILE_PATH = os.path.join(Path(os.getcwd()) / "db.sqlite3")
+SQLALCHEMY_URL = f"sqlite:///{SQLITE_FILE_PATH}"
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -46,7 +47,7 @@ def run_migrations_offline():
     script output.
 
     """
-    url = f"sqlite:///{SQLITE_FILE_PATH}"
+    url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -66,7 +67,6 @@ def run_migrations_online():
 
     """
     ini_config = config.get_section(config.config_ini_section)
-    ini_config["sqlalchemy.url"] = f"sqlite:///{SQLITE_FILE_PATH}"
 
     connectable = engine_from_config(
         ini_config,

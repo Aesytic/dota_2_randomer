@@ -1,12 +1,15 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from uuid import UUID, uuid4
 from typing import List
 
 from api import hero
-from api.data_structures import Hero, HeroType
-from db.sqlite import SqliteSession
+from api.data_structures import Hero, HeroType, HeroUpdateRequest
+from db.sqlite import engine_factory, sessionmaker_factory
 
 app = FastAPI()
+
+engine = engine_factory()
+sessionmaker = sessionmaker_factory(engine)
 
 TEST_HERO = Hero(id=uuid4(), name="testing", randomable=True, hero_type=HeroType.MID)
 
@@ -28,18 +31,23 @@ def read_hero(hero_id: UUID):
 
 @app.post("/heroes")
 def create_hero(request: Hero):
-    session = SqliteSession()
+    session = sessionmaker()
 
-    hero.create_hero(session, request)
-
-    session.close()
+    with session.begin():
+        hero.create_hero(session, request)
 
     return request
 
 
 @app.put("/heroes/{hero_id}", response_model=Hero)
-def update_hero(hero_id: UUID, request: Hero):
-    updated_hero = hero.update_hero(hero_id, request)
+def update_hero(hero_id: UUID, request: HeroUpdateRequest):
+    session = sessionmaker()
+
+    with session.begin():
+        try:
+            updated_hero = hero.update_hero(session, hero_id, request)
+        except ValueError as e:
+            raise HTTPException(status_code=404, detail=str(e))
 
     return updated_hero
 

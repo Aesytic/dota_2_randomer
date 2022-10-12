@@ -4,6 +4,7 @@ from sqlalchemy.orm import declarative_base
 Base = declarative_base()
 
 
+# The fields of this model should remain aligned with the fields in the Hero model
 class Heroes(Base):
     __tablename__ = "heroes"
 
