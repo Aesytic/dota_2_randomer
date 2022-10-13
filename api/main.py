@@ -26,7 +26,12 @@ def list_heroes():
 
 @app.get("/heroes/{hero_id}", response_model=Hero)
 def read_hero(hero_id: UUID):
-    return TEST_HERO
+    session = sessionmaker()
+
+    with session.begin():
+        queried_hero = hero.read_hero(session, hero_id)
+
+    return queried_hero
 
 
 @app.post("/heroes")
@@ -34,9 +39,9 @@ def create_hero(request: Hero):
     session = sessionmaker()
 
     with session.begin():
-        hero.create_hero(session, request)
+        created_hero = hero.create_hero(session, request)
 
-    return request
+    return created_hero
 
 
 @app.put("/heroes/{hero_id}", response_model=Hero)

@@ -5,13 +5,25 @@ from api.data_structures import Hero, HeroType, HeroUpdateRequest
 from db import models
 
 
-def create_hero(session: Session, hero: Hero):
+def create_hero(session: Session, hero: Hero) -> Hero:
     hero_row = models.Heroes(**hero.to_dict())
     session.add(hero_row)
     session.commit()
 
+    return hero
 
-def update_hero(session: Session, hero_id: UUID, updated_hero: HeroUpdateRequest):
+
+def read_hero(session: Session, hero_id: UUID) -> Hero:
+    hero_row = session.query(models.Heroes).filter(models.Heroes.id == str(hero_id)).first()
+
+    if hero_row is None:
+        raise ValueError(f"Hero ID {hero_id} not found")
+
+    return hero_row_to_base_model(hero_row)
+
+
+
+def update_hero(session: Session, hero_id: UUID, updated_hero: HeroUpdateRequest) -> Hero:
     hero_row = session.query(models.Heroes).filter(models.Heroes.id == str(hero_id)).first()
 
     if hero_row is None:
@@ -26,13 +38,12 @@ def update_hero(session: Session, hero_id: UUID, updated_hero: HeroUpdateRequest
     if updated_hero.hero_type is not None:
         hero_row.hero_type = updated_hero.hero_type.value
 
-    ret_id = hero_id
-    ret_name = hero_row.name
-    ret_randomable = hero_row.randomable
-    ret_hero_type = HeroType(hero_row.hero_type)
-
-    return Hero(id=ret_id, name=ret_name, randomable=ret_randomable, hero_type=ret_hero_type)
+    return hero_row_to_base_model(hero_row)
 
 
 def delete_hero(hero_id: UUID):
     return None
+
+
+def hero_row_to_base_model(hero_row: models.Heroes) -> Hero:
+    return Hero(id=hero_row.id, name=hero_row.name, randomable=hero_row.randomable, hero_type=HeroType(hero_row.hero_type))
