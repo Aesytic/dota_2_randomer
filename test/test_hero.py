@@ -2,7 +2,7 @@ from uuid import uuid4, UUID
 import pytest
 
 from api.data_structures import Hero, HeroType, HeroUpdateRequest
-from api.hero import create_hero, read_hero, update_hero
+from api.hero import create_hero, read_hero, update_hero, delete_hero
 from db import models
 
 
@@ -52,12 +52,10 @@ def test_read_hero_invalid(test_db_session):
                              (HeroUpdateRequest(name=None, randomable=None, hero_type=HeroType.CARRY))
                          ])
 def test_update_hero_valid(test_db_session, test_hero_row, test_update_request):
-    create_hero(test_db_session, test_hero_row)
-    added_hero = test_db_session.query(models.Heroes).first()
-    added_hero_id = added_hero.id
+    added_hero = create_hero(test_db_session, test_hero_row)
 
-    update_hero(test_db_session, added_hero_id, test_update_request)
-    updated_hero = test_db_session.query(models.Heroes).filter(models.Heroes.id == added_hero_id).first()
+    update_hero(test_db_session, added_hero.id, test_update_request)
+    updated_hero = test_db_session.query(models.Heroes).filter(models.Heroes.id == str(added_hero.id)).first()
 
     assert updated_hero.name == test_update_request.name or added_hero.name
     assert updated_hero.randomable == test_update_request.randomable or added_hero.randomable
@@ -68,5 +66,21 @@ def test_update_hero_invalid(test_db_session):
     with pytest.raises(ValueError) as e:
         fake_uuid = uuid4()
         update_hero(test_db_session, fake_uuid, HeroUpdateRequest())
+
+    assert str(e.value) == f"Hero ID {fake_uuid} not found"
+
+
+def test_delete_hero_valid(test_db_session, test_hero_row):
+    added_hero = create_hero(test_db_session, test_hero_row)
+    delete_hero(test_db_session, added_hero.id)
+    queried_deleted_hero = test_db_session.query(models.Heroes).filter(models.Heroes.id == str(added_hero.id)).first()
+
+    assert queried_deleted_hero is None
+
+
+def test_delete_hero_invalid(test_db_session):
+    with pytest.raises(ValueError) as e:
+        fake_uuid = uuid4()
+        delete_hero(test_db_session, fake_uuid)
 
     assert str(e.value) == f"Hero ID {fake_uuid} not found"

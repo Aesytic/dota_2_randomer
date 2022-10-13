@@ -59,6 +59,12 @@ def update_hero(hero_id: UUID, request: HeroUpdateRequest):
 
 @app.delete("/heroes/{hero_id}", response_model=Hero)
 def delete_hero(hero_id: UUID):
-    deleted_hero = hero.delete_hero(hero_id)
+    session = sessionmaker()
 
-    return TEST_HERO
+    with session.begin():
+        try:
+            deleted_hero = hero.delete_hero(session, hero_id)
+        except ValueError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+
+    return deleted_hero
