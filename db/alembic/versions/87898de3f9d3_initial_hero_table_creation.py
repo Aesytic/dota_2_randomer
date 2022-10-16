@@ -1,8 +1,8 @@
 """initial hero table creation
 
-Revision ID: dde7e0d4e9c7
+Revision ID: 87898de3f9d3
 Revises: 
-Create Date: 2022-10-08 18:52:43.173777
+Create Date: 2022-10-16 12:44:11.851672
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'dde7e0d4e9c7'
+revision = '87898de3f9d3'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -23,7 +23,8 @@ def upgrade():
     sa.Column('name', sa.String(length=50), nullable=False),
     sa.Column('randomable', sa.Boolean(), nullable=False),
     sa.Column('hero_type', sa.String(length=50), nullable=False),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('id')
     )
     # ### end Alembic commands ###
 
