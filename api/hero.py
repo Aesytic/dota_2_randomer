@@ -1,6 +1,7 @@
 from uuid import UUID
 from sqlalchemy.orm import Session
 from typing import List
+import random
 
 from api.data_structures import Hero, HeroType, HeroUpdateRequest
 from db import models
@@ -61,6 +62,15 @@ def delete_hero(session: Session, hero_id: UUID):
     session.commit()
 
     return deleted_hero
+
+
+def get_random_hero(session: Session) -> Hero:
+    # TODO: use more efficient approach to get a random hero
+    # Should be fine now as there are unlikely to ever be more than 200 heroes
+    randomable_heroes = session.query(models.Heroes).filter(models.Heroes.randomable == True).all()
+    num_randomable_heroes = len(randomable_heroes)
+
+    return hero_row_to_base_model(randomable_heroes[random.randrange(0, num_randomable_heroes)])
 
 
 def hero_row_to_base_model(hero_row: models.Heroes) -> Hero:

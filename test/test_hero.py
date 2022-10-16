@@ -1,21 +1,31 @@
 from uuid import uuid4, UUID
 import pytest
+import random
 
 from api.data_structures import Hero, HeroType, HeroUpdateRequest
-from api.hero import read_all_heroes, create_hero, read_hero, update_hero, delete_hero
+from api.hero import read_all_heroes, create_hero, read_hero, update_hero, delete_hero, get_random_hero
 from db import models
 
 
 @pytest.fixture
 def test_hero_row():
-    test_hero = Hero(id=UUID("71c7b181-bf67-4a7e-bc61-6c67bc8bb2fc"), name="testing", randomable=True, hero_type=HeroType.MID)
+    test_hero = Hero(id=UUID("71c7b181-bf67-4a7e-bc61-6c67bc8bb2fc"),
+                     name="testing",
+                     randomable=True,
+                     hero_type=HeroType.MID)
 
     yield test_hero
 
 
 def test_read_all_heroes(test_db_session):
-    test_row_1 = Hero(id=UUID("71c7b181-bf67-4a7e-bc61-6c67bc8bb2fc"), name="testing", randomable=True, hero_type=HeroType.MID)
-    test_row_2 = Hero(id=UUID("44322a6a-b2ef-4807-acc8-a32fdd7125ab"), name="testing_2", randomable=False, hero_type=HeroType.CARRY)
+    test_row_1 = Hero(id=UUID("71c7b181-bf67-4a7e-bc61-6c67bc8bb2fc"),
+                      name="testing",
+                      randomable=True,
+                      hero_type=HeroType.MID)
+    test_row_2 = Hero(id=UUID("44322a6a-b2ef-4807-acc8-a32fdd7125ab"),
+                      name="testing_2",
+                      randomable=False,
+                      hero_type=HeroType.CARRY)
     test_rows = [models.Heroes(**test_row_1.to_dict()), models.Heroes(**test_row_2.to_dict())]
     test_db_session.add_all(test_rows)
     test_db_session.commit()
@@ -112,3 +122,41 @@ def test_delete_hero_invalid(test_db_session):
         delete_hero(test_db_session, fake_uuid)
 
     assert str(e.value) == f"Hero ID {fake_uuid} not found"
+
+
+def test_get_random_hero(test_db_session):
+    test_row_1 = Hero(id=UUID("71c7b181-bf67-4a7e-bc61-6c67bc8bb2fc"),
+                      name="testing",
+                      randomable=True,
+                      hero_type=HeroType.MID)
+    test_row_2 = Hero(id=UUID("44322a6a-b2ef-4807-acc8-a32fdd7125ab"),
+                      name="testing_2",
+                      randomable=True,
+                      hero_type=HeroType.CARRY)
+    test_row_3 = Hero(id=UUID("4cd2ac09-cb8d-4409-8287-f452e455bce9"),
+                      name="testing_3",
+                      randomable=True,
+                      hero_type=HeroType.SUPPORT)
+    test_rows = [models.Heroes(**test_row_1.to_dict()),
+                 models.Heroes(**test_row_2.to_dict()),
+                 models.Heroes(**test_row_3.to_dict())]
+    test_db_session.add_all(test_rows)
+    test_db_session.commit()
+
+    # This seed should output the following order of rows in this test:
+    #   row 1, row 2, row 2, row 2, row 1, row 3
+    random.seed(a=5000)
+
+    random_1 = get_random_hero(test_db_session)
+    random_2 = get_random_hero(test_db_session)
+    random_3 = get_random_hero(test_db_session)
+    random_4 = get_random_hero(test_db_session)
+    random_5 = get_random_hero(test_db_session)
+    random_6 = get_random_hero(test_db_session)
+
+    assert random_1.id == test_row_1.id
+    assert random_2.id == test_row_2.id
+    assert random_3.id == test_row_2.id
+    assert random_4.id == test_row_2.id
+    assert random_5.id == test_row_1.id
+    assert random_6.id == test_row_3.id
