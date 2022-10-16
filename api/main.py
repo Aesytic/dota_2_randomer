@@ -21,7 +21,12 @@ def index():
 
 @app.get("/heroes", response_model=List[Hero])
 def list_heroes():
-    return [TEST_HERO]
+    session = sessionmaker()
+
+    with session.begin():
+        all_heroes = hero.read_all_heroes(session)
+
+    return all_heroes
 
 
 @app.get("/heroes/{hero_id}", response_model=Hero)

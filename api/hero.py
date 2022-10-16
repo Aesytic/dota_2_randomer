@@ -1,8 +1,15 @@
 from uuid import UUID
 from sqlalchemy.orm import Session
+from typing import List
 
 from api.data_structures import Hero, HeroType, HeroUpdateRequest
 from db import models
+
+
+def read_all_heroes(session: Session) -> List[Hero]:
+    hero_rows = session.query(models.Heroes).all()
+
+    return [hero_row_to_base_model(hero_row) for hero_row in hero_rows]
 
 
 def create_hero(session: Session, hero: Hero) -> Hero:
