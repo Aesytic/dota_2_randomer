@@ -70,6 +70,9 @@ def get_random_hero(session: Session) -> Hero:
     randomable_heroes = session.query(models.Heroes).filter(models.Heroes.randomable == True).all()
     num_randomable_heroes = len(randomable_heroes)
 
+    if num_randomable_heroes == 0:
+        raise ValueError("No randomable heroes in DB")
+
     return hero_row_to_base_model(randomable_heroes[random.randrange(0, num_randomable_heroes)])
 
 

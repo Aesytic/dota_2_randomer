@@ -19,6 +19,19 @@ def index():
     return {"Hello": "World"}
 
 
+@app.get("/random/hero", response_model=Hero)
+def random_hero():
+    session = sessionmaker()
+
+    with session.begin():
+        try:
+            randomed_hero = hero.get_random_hero(session)
+        except ValueError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+
+    return randomed_hero
+
+
 @app.get("/heroes", response_model=List[Hero])
 def list_heroes():
     session = sessionmaker()

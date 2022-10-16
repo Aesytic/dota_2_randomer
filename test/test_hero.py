@@ -124,7 +124,7 @@ def test_delete_hero_invalid(test_db_session):
     assert str(e.value) == f"Hero ID {fake_uuid} not found"
 
 
-def test_get_random_hero(test_db_session):
+def test_get_random_hero_valid(test_db_session):
     test_row_1 = Hero(id=UUID("71c7b181-bf67-4a7e-bc61-6c67bc8bb2fc"),
                       name="testing",
                       randomable=True,
@@ -160,3 +160,29 @@ def test_get_random_hero(test_db_session):
     assert random_4.id == test_row_2.id
     assert random_5.id == test_row_1.id
     assert random_6.id == test_row_3.id
+
+
+def test_get_random_hero_invalid(test_db_session):
+    # No randomable heroes in DB
+    test_row_1 = Hero(id=UUID("71c7b181-bf67-4a7e-bc61-6c67bc8bb2fc"),
+                      name="testing",
+                      randomable=False,
+                      hero_type=HeroType.MID)
+    test_row_2 = Hero(id=UUID("44322a6a-b2ef-4807-acc8-a32fdd7125ab"),
+                      name="testing_2",
+                      randomable=False,
+                      hero_type=HeroType.CARRY)
+    test_row_3 = Hero(id=UUID("4cd2ac09-cb8d-4409-8287-f452e455bce9"),
+                      name="testing_3",
+                      randomable=False,
+                      hero_type=HeroType.SUPPORT)
+    test_rows = [models.Heroes(**test_row_1.to_dict()),
+                 models.Heroes(**test_row_2.to_dict()),
+                 models.Heroes(**test_row_3.to_dict())]
+    test_db_session.add_all(test_rows)
+    test_db_session.commit()
+
+    with pytest.raises(ValueError) as e:
+        get_random_hero(test_db_session)
+
+    assert str(e.value) == "No randomable heroes in DB"
