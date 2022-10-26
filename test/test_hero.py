@@ -8,11 +8,13 @@ from db import models
 
 
 @pytest.fixture
-def test_hero_row():
-    test_hero = Hero(id=UUID("71c7b181-bf67-4a7e-bc61-6c67bc8bb2fc"),
-                     name="testing",
-                     randomable=True,
-                     hero_type=HeroType.MID)
+def test_hero_row(test_db_session):
+    test_hero = models.Heroes(id="71c7b181-bf67-4a7e-bc61-6c67bc8bb2fc",
+                              name="testing",
+                              randomable=True,
+                              hero_type=HeroType.MID.value)
+    test_db_session.add(test_hero)
+    test_db_session.commit()
 
     yield test_hero
 
@@ -44,36 +46,37 @@ def test_read_all_heroes(test_db_session):
     assert HeroType(all_heroes_dict[test_row_2.id].hero_type) == test_row_2.hero_type
 
 
-def test_create_hero(test_db_session, test_hero_row):
-    create_hero(test_db_session, test_hero_row)
+def test_create_hero(test_db_session):
+    test_hero = Hero(id=UUID("6e4393ef-9ae8-4a1c-b8bc-86da28c4aae9"),
+                     name="test_new_hero",
+                     randomable=True,
+                     hero_type=HeroType.SUPPORT.value)
+
+    create_hero(test_db_session, test_hero)
 
     added_hero = test_db_session.query(models.Heroes).first()
 
-    assert added_hero.id == str(test_hero_row.id)
-    assert added_hero.name == test_hero_row.name
-    assert added_hero.randomable == test_hero_row.randomable
-    assert HeroType(added_hero.hero_type) == test_hero_row.hero_type
+    assert added_hero.id == str(test_hero.id)
+    assert added_hero.name == test_hero.name
+    assert added_hero.randomable == test_hero.randomable
+    assert HeroType(added_hero.hero_type) == test_hero.hero_type
 
 
 def test_read_hero_valid(test_db_session, test_hero_row):
-    hero_row = models.Heroes(**test_hero_row.to_dict())
-    test_db_session.add(hero_row)
-    test_db_session.commit()
+    queried_hero = read_hero(test_db_session, test_hero_row.name)
 
-    queried_hero = read_hero(test_db_session, test_hero_row.id)
-
-    assert test_hero_row.id == queried_hero.id
+    assert test_hero_row.id == str(queried_hero.id)
     assert test_hero_row.name == queried_hero.name
     assert test_hero_row.randomable == queried_hero.randomable
-    assert test_hero_row.hero_type == queried_hero.hero_type
+    assert test_hero_row.hero_type == queried_hero.hero_type.value
 
 
 def test_read_hero_invalid(test_db_session):
+    test_hero_name = "fake_hero"
     with pytest.raises(ValueError) as e:
-        fake_uuid = uuid4()
-        read_hero(test_db_session, fake_uuid)
+        read_hero(test_db_session, test_hero_name)
 
-    assert str(e.value) == f"Hero ID {fake_uuid} not found"
+    assert str(e.value) == f"Hero {test_hero_name} not found"
 
 
 @pytest.mark.parametrize("test_update_request",
@@ -84,10 +87,6 @@ def test_read_hero_invalid(test_db_session):
                              (HeroUpdateRequest(name=None, randomable=None, hero_type=HeroType.CARRY))
                          ])
 def test_update_hero_valid(test_db_session, test_hero_row, test_update_request):
-    hero_row = models.Heroes(**test_hero_row.to_dict())
-    test_db_session.add(hero_row)
-    test_db_session.commit()
-
     update_hero(test_db_session, test_hero_row.id, test_update_request)
     updated_hero = test_db_session.query(models.Heroes).filter(models.Heroes.id == str(test_hero_row.id)).first()
 
@@ -105,10 +104,6 @@ def test_update_hero_invalid(test_db_session):
 
 
 def test_delete_hero_valid(test_db_session, test_hero_row):
-    hero_row = models.Heroes(**test_hero_row.to_dict())
-    test_db_session.add(hero_row)
-    test_db_session.commit()
-
     delete_hero(test_db_session, test_hero_row.id)
     queried_deleted_hero = test_db_session.query(models.Heroes).\
         filter(models.Heroes.id == str(test_hero_row.id)).first()

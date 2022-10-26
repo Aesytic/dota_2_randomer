@@ -42,12 +42,15 @@ def list_heroes():
     return all_heroes
 
 
-@app.get("/heroes/{hero_id}", response_model=Hero)
-def read_hero(hero_id: UUID):
+@app.get("/heroes/{hero_name}", response_model=Hero)
+def read_hero_from_name(hero_name: str):
     session = sessionmaker()
 
     with session.begin():
-        queried_hero = hero.read_hero(session, hero_id)
+        try:
+            queried_hero = hero.read_hero(session, hero_name)
+        except ValueError as e:
+            raise HTTPException(status_code=404, detail=str(e))
 
     return queried_hero
 
