@@ -1,9 +1,9 @@
 from uuid import UUID
 from sqlalchemy.orm import Session
-from typing import List, Any
+from typing import List
 import random
 
-from api.data_structures import Hero, HeroType, HeroUpdateRequest
+from api.data_structures import Hero, HeroUpdateRequest
 from db import models
 
 
