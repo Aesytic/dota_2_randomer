@@ -7,7 +7,7 @@ from typing import List
 from pydantic import BaseModel
 from uuid import uuid4
 
-sys.path.append(os.path.join(Path(__file__).parent, os.pardir))
+sys.path.append(os.path.join(Path(__file__).parent, os.pardir, os.pardir))
 
 from scripts.api_client import ApiClient
 from api.data_structures import Hero, HeroType
