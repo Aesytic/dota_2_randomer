@@ -50,7 +50,6 @@ def load_heroes(api_base_url: str):
             continue
 
         hero_id = uuid4()
-        # TODO: Support multiple hero types for a hero
         # Find first enum-compatible role in API - note that the HeroType enum is a subset of the roles from the
         #   OpenDota API
         # Otherwise default to support

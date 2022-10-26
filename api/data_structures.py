@@ -25,7 +25,7 @@ class Hero(BaseSerialisableModel):
     id: UUID
     name: str
     randomable: bool = True
-    hero_type: HeroType
+    hero_type: HeroType  # TODO: Support multiple hero types for a hero
 
     @classmethod
     def from_hero_db_model(cls, hero_row: Heroes):
