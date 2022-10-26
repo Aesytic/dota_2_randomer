@@ -1,6 +1,6 @@
 from uuid import UUID
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Any
 import random
 
 from api.data_structures import Hero, HeroType, HeroUpdateRequest
@@ -10,7 +10,7 @@ from db import models
 def read_all_heroes(session: Session) -> List[Hero]:
     hero_rows = session.query(models.Heroes).all()
 
-    return [hero_row_to_base_model(hero_row) for hero_row in hero_rows]
+    return [Hero.from_hero_db_model(hero_row) for hero_row in hero_rows]
 
 
 def create_hero(session: Session, hero: Hero) -> Hero:
@@ -21,13 +21,13 @@ def create_hero(session: Session, hero: Hero) -> Hero:
     return hero
 
 
-def read_hero(session: Session, hero_id: UUID) -> Hero:
-    hero_row = session.query(models.Heroes).filter(models.Heroes.id == str(hero_id)).first()
+def read_hero(session: Session, hero_name: str) -> Hero:
+    hero_row = session.query(models.Heroes).filter(models.Heroes.name == hero_name).first()
 
     if hero_row is None:
-        raise ValueError(f"Hero ID {hero_id} not found")
+        raise ValueError(f"Hero {hero_name} not found")
 
-    return hero_row_to_base_model(hero_row)
+    return Hero.from_hero_db_model(hero_row)
 
 
 def update_hero(session: Session, hero_id: UUID, updated_hero: HeroUpdateRequest) -> Hero:
@@ -47,7 +47,7 @@ def update_hero(session: Session, hero_id: UUID, updated_hero: HeroUpdateRequest
 
     session.commit()
 
-    return hero_row_to_base_model(hero_row)
+    return Hero.from_hero_db_model(hero_row)
 
 
 def delete_hero(session: Session, hero_id: UUID):
@@ -56,7 +56,7 @@ def delete_hero(session: Session, hero_id: UUID):
     if hero_row is None:
         raise ValueError(f"Hero ID {hero_id} not found")
 
-    deleted_hero = hero_row_to_base_model(hero_row)
+    deleted_hero = Hero.from_hero_db_model(hero_row)
 
     session.delete(hero_row)
     session.commit()
@@ -73,11 +73,4 @@ def get_random_hero(session: Session) -> Hero:
     if num_randomable_heroes == 0:
         raise ValueError("No randomable heroes in DB")
 
-    return hero_row_to_base_model(randomable_heroes[random.randrange(0, num_randomable_heroes)])
-
-
-def hero_row_to_base_model(hero_row: models.Heroes) -> Hero:
-    return Hero(id=hero_row.id,
-                name=hero_row.name,
-                randomable=hero_row.randomable,
-                hero_type=HeroType(hero_row.hero_type))
+    return Hero.from_hero_db_model(randomable_heroes[random.randrange(0, num_randomable_heroes)])
