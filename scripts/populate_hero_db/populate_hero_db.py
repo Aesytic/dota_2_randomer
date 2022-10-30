@@ -31,41 +31,38 @@ class OpenDotaHeroesResponse(BaseModel):
     response: List[OpenDotaHeroModel]
 
 
-def main():
-    if len(sys.argv) != 2:
-        sys.exit(f"Usage: python {sys.argv[0]} <API base URL>")
-
-    load_heroes(api_base_url=sys.argv[1])
-
-
-def load_heroes(api_base_url: str):
+def main(api_base_url: str):
     hero_randomiser_api_client = ApiClient(base_url=api_base_url)
 
     heroes_response = requests.get(HEROES_API)
     heroes = OpenDotaHeroesResponse(response=heroes_response.json())
 
     for hero in heroes.response:
-        if check_hero_exists(hero_randomiser_api_client, hero.localized_name):
-            print(f"Hero {hero.localized_name} already exists - skipping")
+        add_hero_to_api(hero_randomiser_api_client, hero)
+
+
+def add_hero_to_api(hero_randomiser_api_client: ApiClient, hero: OpenDotaHeroModel):
+    if check_hero_exists(hero_randomiser_api_client, hero.localized_name):
+        print(f"Hero {hero.localized_name} already exists")
+        return
+
+    hero_id = uuid4()
+    # Find first enum-compatible role in API - note that the HeroType enum is a subset of the roles from the
+    #   OpenDota API
+    # Otherwise default to support
+    hero_type = HeroType.SUPPORT.value
+    for role in hero.roles:
+        try:
+            hero_type = HeroType(role).value
+        except ValueError:
             continue
+        else:
+            break
 
-        hero_id = uuid4()
-        # Find first enum-compatible role in API - note that the HeroType enum is a subset of the roles from the
-        #   OpenDota API
-        # Otherwise default to support
-        hero_type = HeroType.SUPPORT.value
-        for role in hero.roles:
-            try:
-                hero_type = HeroType(role).value
-            except ValueError:
-                continue
-            else:
-                break
+    hero = Hero(id=str(hero_id), name=hero.localized_name, hero_type=hero_type)
+    hero_randomiser_api_client.post("/heroes", hero.json())
 
-        hero = Hero(id=str(hero_id), name=hero.localized_name, hero_type=hero_type)
-        hero_randomiser_api_client.post("/heroes", hero.json())
-
-        print(f"Added {hero}")
+    print(f"Added {hero}")
 
 
 def check_hero_exists(hero_randomiser_api_client: ApiClient, hero_name: str) -> bool:
@@ -78,4 +75,7 @@ def check_hero_exists(hero_randomiser_api_client: ApiClient, hero_name: str) -> 
 
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) != 2:
+        sys.exit(f"Usage: python {sys.argv[0]} <API base URL>")
+
+    main(sys.argv[1])
