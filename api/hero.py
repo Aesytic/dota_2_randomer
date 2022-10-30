@@ -30,24 +30,25 @@ def read_hero(session: Session, hero_name: str) -> Hero:
     return Hero.from_hero_db_model(hero_row)
 
 
-def update_hero(session: Session, hero_id: UUID, updated_hero: HeroUpdateRequest) -> Hero:
+def update_hero(session: Session, hero_id: UUID, update_hero_request: HeroUpdateRequest) -> Hero:
     hero_row = session.query(models.Heroes).filter(models.Heroes.id == str(hero_id)).first()
 
     if hero_row is None:
         raise ValueError(f"Hero ID {hero_id} not found")
 
-    if updated_hero.name is not None:
-        hero_row.name = updated_hero.name
+    if update_hero_request.name is not None:
+        hero_row.name = update_hero_request.name
 
-    if updated_hero.randomable is not None:
-        hero_row.randomable = updated_hero.randomable
+    if update_hero_request.randomable is not None:
+        hero_row.randomable = update_hero_request.randomable
 
-    if updated_hero.hero_type is not None:
-        hero_row.hero_type = updated_hero.hero_type.value
+    if update_hero_request.hero_type is not None:
+        hero_row.hero_type = update_hero_request.hero_type.value
 
+    updated_hero = Hero.from_hero_db_model(hero_row)
     session.commit()
 
-    return Hero.from_hero_db_model(hero_row)
+    return updated_hero
 
 
 def delete_hero(session: Session, hero_id: UUID):
