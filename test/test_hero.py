@@ -19,7 +19,14 @@ def test_hero_row(test_db_session):
     yield test_hero
 
 
-def test_read_all_heroes(test_db_session):
+@pytest.mark.parametrize("filters,expected_num_entries",
+                         [((None, None, None, None), 2),
+                          (("71c7b181-bf67-4a7e-bc61-6c67bc8bb2fc", None, None, None), 1),
+                          ((None, "testing_2", None, None), 1),
+                          ((None, None, True, None), 1),
+                          ((None, None, None, HeroType.CARRY.value), 1),
+                          (("broken filter", None, None, None), 0)])
+def test_read_all_heroes(test_db_session, filters, expected_num_entries):
     test_row_1 = Hero(id=UUID("71c7b181-bf67-4a7e-bc61-6c67bc8bb2fc"),
                       name="testing",
                       randomable=True,
@@ -32,18 +39,10 @@ def test_read_all_heroes(test_db_session):
     test_db_session.add_all(test_rows)
     test_db_session.commit()
 
-    all_heroes = read_all_heroes(test_db_session)
+    all_heroes = read_all_heroes(test_db_session, *filters)
     all_heroes_dict = {hero_row.id: hero_row for hero_row in all_heroes}
 
-    assert len(all_heroes_dict) == 2
-    assert all_heroes_dict[test_row_1.id].id == test_row_1.id
-    assert all_heroes_dict[test_row_1.id].name == test_row_1.name
-    assert all_heroes_dict[test_row_1.id].randomable == test_row_1.randomable
-    assert HeroType(all_heroes_dict[test_row_1.id].hero_type) == test_row_1.hero_type
-    assert all_heroes_dict[test_row_2.id].id == test_row_2.id
-    assert all_heroes_dict[test_row_2.id].name == test_row_2.name
-    assert all_heroes_dict[test_row_2.id].randomable == test_row_2.randomable
-    assert HeroType(all_heroes_dict[test_row_2.id].hero_type) == test_row_2.hero_type
+    assert len(all_heroes_dict) == expected_num_entries
 
 
 def test_create_hero(test_db_session):
@@ -63,7 +62,7 @@ def test_create_hero(test_db_session):
 
 
 def test_read_hero_valid(test_db_session, test_hero_row):
-    queried_hero = read_hero(test_db_session, test_hero_row.name)
+    queried_hero = read_hero(test_db_session, test_hero_row.id)
 
     assert test_hero_row.id == str(queried_hero.id)
     assert test_hero_row.name == queried_hero.name
@@ -72,11 +71,11 @@ def test_read_hero_valid(test_db_session, test_hero_row):
 
 
 def test_read_hero_invalid(test_db_session):
-    test_hero_name = "fake_hero"
+    test_hero_id = "fake_hero"
     with pytest.raises(ValueError) as e:
-        read_hero(test_db_session, test_hero_name)
+        read_hero(test_db_session, test_hero_id)
 
-    assert str(e.value) == f"Hero {test_hero_name} not found"
+    assert str(e.value) == f"Hero {test_hero_id} not found"
 
 
 @pytest.mark.parametrize("test_update_request",

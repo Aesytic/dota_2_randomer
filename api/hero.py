@@ -1,5 +1,5 @@
 from uuid import UUID
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, Query
 from typing import List
 import random
 
@@ -7,8 +7,23 @@ from api.data_structures import Hero, HeroUpdateRequest
 from db import models
 
 
-def read_all_heroes(session: Session) -> List[Hero]:
-    hero_rows = session.query(models.Heroes).all()
+def read_all_heroes(session: Session, id: str, name: str, randomable: bool, hero_type: str) -> List[Hero]:
+    db_query = session.query(models.Heroes)
+
+    # Filter in order of most restrictive to least restrictive
+    if id:
+        db_query = db_query.filter(models.Heroes.id == id)
+
+    if name:
+        db_query = db_query.filter(models.Heroes.name == name)
+
+    if randomable is not None:
+        db_query = db_query.filter(models.Heroes.randomable == randomable)
+
+    if hero_type:
+        db_query = db_query.filter(models.Heroes.hero_type == hero_type)
+
+    hero_rows = db_query.all()
 
     return [Hero.from_hero_db_model(hero_row) for hero_row in hero_rows]
 
@@ -21,11 +36,11 @@ def create_hero(session: Session, hero: Hero) -> Hero:
     return hero
 
 
-def read_hero(session: Session, hero_name: str) -> Hero:
-    hero_row = session.query(models.Heroes).filter(models.Heroes.name == hero_name).first()
+def read_hero(session: Session, hero_id: str) -> Hero:
+    hero_row = session.query(models.Heroes).filter(models.Heroes.id == hero_id).first()
 
     if hero_row is None:
-        raise ValueError(f"Hero {hero_name} not found")
+        raise ValueError(f"Hero {hero_id} not found")
 
     return Hero.from_hero_db_model(hero_row)
 

@@ -16,26 +16,34 @@ def get_all_heroes(hero_randomiser_api_client: ApiClient) -> List[Hero]:
     return [Hero(**hero) for hero in get_heroes_response.json()]
 
 
-def get_hero(hero_randomiser_api_client: ApiClient, hero_name: str) -> Hero:
-    hero_response = hero_randomiser_api_client.get(f"/heroes/{hero_name}")
+def get_hero(hero_randomiser_api_client: ApiClient, hero_name: str) -> List[Hero]:
+    hero_response = hero_randomiser_api_client.get(f"/heroes?name={hero_name}")
 
     if hero_response.status_code != 200:
         error_message = hero_response.json()["detail"]
         raise ValueError(error_message)
 
-    return Hero(**hero_response.json())
+    return [Hero(**hero) for hero in hero_response.json()]
 
 
 def main(api_base_url: str, hero_name: Optional[str] = None):
     hero_randomiser_api_client = ApiClient(base_url=api_base_url)
     if hero_name:
         try:
-            hero_list = [get_hero(hero_randomiser_api_client, hero_name)]
+            hero_list = get_hero(hero_randomiser_api_client, hero_name)
         except Exception as e:
             print(f"Error while querying {hero_name}: {e}")
             return
     else:
-        hero_list = get_all_heroes(hero_randomiser_api_client)
+        try:
+            hero_list = get_all_heroes(hero_randomiser_api_client)
+        except Exception as e:
+            print(f"Error while attempting to get hero list: {e}")
+            return
+
+    if len(hero_list) == 0:
+        print("Warning: no applicable heroes found")
+        return
 
     for hero in hero_list:
         try:

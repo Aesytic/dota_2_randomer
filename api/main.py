@@ -33,22 +33,22 @@ def random_hero():
 
 
 @app.get("/heroes", response_model=List[Hero])
-def list_heroes():
+def list_heroes(id: str = None, name: str = None, randomable: bool = None, hero_type: str = None):
     session = sessionmaker()
 
     with session.begin():
-        all_heroes = hero.read_all_heroes(session)
+        all_heroes = hero.read_all_heroes(session, id, name, randomable, hero_type)
 
     return all_heroes
 
 
-@app.get("/heroes/{hero_name}", response_model=Hero)
-def read_hero_from_name(hero_name: str):
+@app.get("/heroes/{hero_id}", response_model=Hero)
+def read_hero(hero_id: str):
     session = sessionmaker()
 
     with session.begin():
         try:
-            queried_hero = hero.read_hero(session, hero_name)
+            queried_hero = hero.read_hero(session, hero_id)
         except ValueError as e:
             raise HTTPException(status_code=404, detail=str(e))
 

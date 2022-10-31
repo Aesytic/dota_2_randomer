@@ -66,9 +66,9 @@ def add_hero_to_api(hero_randomiser_api_client: ApiClient, hero: OpenDotaHeroMod
 
 
 def check_hero_exists(hero_randomiser_api_client: ApiClient, hero_name: str) -> bool:
-    hero_name_query = hero_randomiser_api_client.get(f"/heroes/{hero_name}")
+    hero_name_query = hero_randomiser_api_client.get(f"/heroes?name={hero_name}")
 
-    if hero_name_query.status_code == 404:
+    if hero_name_query.status_code != 200 or len(hero_name_query.json()) == 0:
         return False
 
     return True
